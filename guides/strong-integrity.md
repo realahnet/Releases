@@ -8,6 +8,8 @@ Custom roms have various methods to spoof stuff to play services which allow us 
 - brian
 - bomb?
 
+## ‼️ ON LATEST YAAP BUILDS, JUST GO TO DEVELOPER SETTINGS AND USE THE LOAD KEYBOX OPTION INSTEAD OF USING ROOT MODULES!!!! THIS IS A BETTER APPROACH.
+
 ## For AOSPA or Others
 - Be on the latest Rom build released.
 - Flash The latest [TrickyStore](https://github.com/5ec1cff/TrickyStore) Module in your root manager.
