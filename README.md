@@ -5,6 +5,8 @@ Please refer to my telegram channel or XDA for updates on YAAP UNOFFICIAL.
 
 ### Useful Guides
 - **[KSU LKM for OnePlus SM8650 Devices](https://github.com/ahnet-69/Releases/blob/main/guides/ksu-lkm.md)**
+- **[Widevine L1 for OnePlus 13R / Ace 5](https://github.com/ahnet-69/Releases/blob/main/guides/widevine-l1-op.md)**
+- **[Dolby Vision for OnePlus SM8650 Devices](https://github.com/ahnet-69/Releases/blob/main/guides/dolby-vision-op.md)**
 - **[Lock Bootloader](https://github.com/ahnet-69/Releases/blob/main/guides/bl-lock.md)**
 - **[Using TrickyStore](https://github.com/ahnet-69/Releases/blob/main/guides/strong-integrity.md)**
 
