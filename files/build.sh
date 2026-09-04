@@ -169,28 +169,55 @@ lunch $1 || exit 1
 # Make package
 mka yaap -j$threads || exit 1
 
-export BUILD_IN_NAME="YAAP-16-HOMEMADE-$device-$timestamp.zip"
-export BUILD_OUT_NAME="YAAP-16-HOMEMADE-$device-$timestamp-$BUILD_TYPE.zip"
+export BUILD_IN_NAME="YAAP-17-HOMEMADE-$device-$timestamp.zip"
+if [[ "$device" == "giulia" || "$device" == "giuliac" ]]; then
+    export BUILD_OUT_NAME="YAAP-17-HOMEMADE-$device-$timestamp.zip"
+else
+    export BUILD_OUT_NAME="YAAP-17-HOMEMADE-$device-$timestamp-$BUILD_TYPE.zip"
+fi
 export BUILD_PATH_DIR="out/target/product/$device"
 
 echo -e
 echo 'Creating Releases folder structure'
-mkdir -p Releases/$device &> /dev/null || exit 1
+
+# Determine release destination directories
+if [[ "$device" == "giulia" || "$device" == "giuliac" ]]; then
+    if [ "$BUILD_TYPE" = "Vanilla" ]; then
+        RELEASE_ZIP_DIR="Releases/$device/vanilla"
+        RELEASE_OTA_DIR="Releases/$device/vanilla"
+        RELEASE_IMG_DIR="Releases/$device/vanilla/images"
+    else
+        RELEASE_ZIP_DIR="Releases/$device"
+        RELEASE_OTA_DIR="Releases/$device"
+        RELEASE_IMG_DIR="Releases/$device/images"
+    fi
+else
+    RELEASE_ZIP_DIR="Releases/$device"
+    RELEASE_IMG_DIR="Releases/$device/$BUILD_TYPE/images"
+    if [ "$BUILD_TYPE" = "Vanilla" ]; then
+        RELEASE_OTA_DIR="Releases/$device/vanilla"
+    else
+        RELEASE_OTA_DIR="Releases/$device"
+    fi
+fi
+
+mkdir -p "$RELEASE_ZIP_DIR" "$RELEASE_OTA_DIR" "$RELEASE_IMG_DIR" &> /dev/null || exit 1
 
 # Rename file in output for correct OTA GEN
-mv "$BUILD_PATH_DIR/$BUILD_IN_NAME" "$BUILD_PATH_DIR/$BUILD_OUT_NAME" || exit 1
-mv "$BUILD_PATH_DIR/$BUILD_IN_NAME.sha256sum" "$BUILD_PATH_DIR/$BUILD_OUT_NAME.sha256sum" || exit 1
+if [ "$BUILD_IN_NAME" != "$BUILD_OUT_NAME" ]; then
+    mv "$BUILD_PATH_DIR/$BUILD_IN_NAME" "$BUILD_PATH_DIR/$BUILD_OUT_NAME" || exit 1
+    mv "$BUILD_PATH_DIR/$BUILD_IN_NAME.sha256sum" "$BUILD_PATH_DIR/$BUILD_OUT_NAME.sha256sum" || exit 1
+fi
 
 # Generate OTA
 ./vendor/yaap/tools/generate_json_build_info.sh $BUILD_PATH_DIR/$BUILD_OUT_NAME
 
 # Copy builds from out
-cp "$BUILD_PATH_DIR/$BUILD_OUT_NAME" "Releases/$device/" || exit 1
-cp "$BUILD_PATH_DIR/$BUILD_OUT_NAME.sha256sum" "Releases/$device/" || exit 1
+cp "$BUILD_PATH_DIR/$BUILD_OUT_NAME" "$RELEASE_ZIP_DIR/" || exit 1
+cp "$BUILD_PATH_DIR/$BUILD_OUT_NAME.sha256sum" "$RELEASE_ZIP_DIR/" || exit 1
 
 # OTA JSON
-mkdir -p Releases/$device/$BUILD_TYPE/OTA &> /dev/null || exit 1
-cp out/target/product/$device/$device.json Releases/$device/$BUILD_TYPE/OTA || exit 1
+cp out/target/product/$device/$device.json "$RELEASE_OTA_DIR/" || exit 1
 
 # Extract Recoveries
 echo -e
@@ -200,28 +227,26 @@ mkdir -p Releases/$device/temp &> /dev/null || exit 1
 
 case $device in
     giulia | giuliac)
-        otaripper -n -p init_boot,vendor_boot Releases/$device/$BUILD_OUT_NAME -o Releases/$device/temp || exit 1
+        otaripper -n -p init_boot,vendor_boot "$RELEASE_ZIP_DIR/$BUILD_OUT_NAME" -o Releases/$device/temp || exit 1
         mv Releases/$device/temp/extracted_*/*.img Releases/$device/temp || exit 1
         rm -rf Releases/$device/temp/extracted_* || exit 1
     ;;
 esac
 
-otaripper -n -p boot,recovery Releases/$device/$BUILD_OUT_NAME -o Releases/$device/temp || exit 1
+otaripper -n -p boot,recovery "$RELEASE_ZIP_DIR/$BUILD_OUT_NAME" -o Releases/$device/temp || exit 1
 
 mv Releases/$device/temp/extracted_*/*.img Releases/$device/temp || exit 1
 rm -rf Releases/$device/temp/extracted_* || exit 1
 
-mkdir -p Releases/$device/$BUILD_TYPE/images &> /dev/null || exit 1
-
 case $device in
     giulia | giuliac)
-        mv Releases/$device/temp/init_boot.img "Releases/$device/$BUILD_TYPE/images" || exit 1
-        mv Releases/$device/temp/vendor_boot.img "Releases/$device/$BUILD_TYPE/images" || exit 1
+        mv Releases/$device/temp/init_boot.img "$RELEASE_IMG_DIR" || exit 1
+        mv Releases/$device/temp/vendor_boot.img "$RELEASE_IMG_DIR" || exit 1
     ;;
 esac
 
-mv Releases/$device/temp/boot.img "Releases/$device/$BUILD_TYPE/images" || exit 1
-mv Releases/$device/temp/recovery.img "Releases/$device/$BUILD_TYPE/images" || exit 1
+mv Releases/$device/temp/boot.img "$RELEASE_IMG_DIR" || exit 1
+mv Releases/$device/temp/recovery.img "$RELEASE_IMG_DIR" || exit 1
 
 rm -rf Releases/$device/temp || exit 1
 
